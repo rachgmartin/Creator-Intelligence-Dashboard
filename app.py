@@ -34,8 +34,30 @@ csv_path = os.path.join(os.path.dirname(__file__), "data", "creator_roster.csv")
 
 try:
     df = pd.read_csv(csv_path)
-    creator_names = df["Creator Name"].tolist()
-    selected_creator = st.selectbox("Select a Creator", creator_names)
+    if "creator_names" not in st.session_state:
+        st.session_state.creator_names = df["Creator Name"].tolist()
+
+    # Creator selection
+    selected_creator = st.selectbox("Select a Creator", st.session_state.creator_names)
+
+    # --- Add New Creator ---
+    with st.expander("Add a New Creator"):
+        new_name = st.text_input("Creator Name", key="new_creator")
+        if st.button("Add Creator"):
+            if new_name and new_name not in st.session_state.creator_names:
+                new_row = {
+                    "Creator Name": new_name,
+                    "Channel ID": "",
+                    "Notes": "",
+                    "Requests": "",
+                    "Priority": "",
+                    "Status": "",
+                    "Last Updated": pd.Timestamp.today().date(),
+                }
+                df = df.append(new_row, ignore_index=True)
+                df.to_csv(csv_path, index=False)
+                st.session_state.creator_names.append(new_name)
+                st.experimental_rerun()
 
     # GNews API Key input
     api_key = st.text_input("Enter your GNews API Key", type="password")
