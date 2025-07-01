@@ -4,7 +4,11 @@ import pandas as pd
 import os
 from utils.news_alerts import fetch_news_mentions
 from utils.sentiment_check import sentiment_summary
-from utils.youtube_api import get_latest_video_id, get_comments
+from utils.youtube_api import (
+    get_latest_video_id,
+    get_comments,
+    search_channel_id,
+)
 
 # Mock data for comments per creator
 mock_comments = {
@@ -37,28 +41,38 @@ try:
     if "creator_names" not in st.session_state:
         st.session_state.creator_names = df["Creator Name"].tolist()
 
+    # API keys
+    yt_api_key = st.text_input("Enter your YouTube API Key", type="password")
+
     # Creator selection
     selected_creator = st.selectbox("Select a Creator", st.session_state.creator_names)
 
     # --- Add New Creator ---
     with st.expander("Add a New Creator"):
         new_name = st.text_input("Creator Name", key="new_creator")
+        new_channel = st.text_input("Channel ID", key="new_channel")
+        if yt_api_key and st.button("Search Channel ID"):
+            found = search_channel_id(new_name, yt_api_key)
+            if found:
+                st.session_state.new_channel = found
+                st.success(f"Found channel ID: {found}")
+            else:
+                st.warning("Channel not found.")
         if st.button("Add Creator"):
             if new_name and new_name not in st.session_state.creator_names:
                 new_row = {
                     "Creator Name": new_name,
-                    "Channel ID": "",
+                    "Channel ID": st.session_state.get("new_channel", new_channel),
                     "Notes": "",
                     "Requests": "",
                     "Priority": "",
                     "Status": "",
                     "Last Updated": pd.Timestamp.today().date(),
                 }
-                # Append the new row using pandas concat to avoid the deprecated
-                # DataFrame.append method
                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
                 df.to_csv(csv_path, index=False)
                 st.session_state.creator_names.append(new_name)
+                st.session_state.new_channel = ""
                 st.experimental_rerun()
 
     # GNews API Key input

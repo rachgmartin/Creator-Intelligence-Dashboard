@@ -1,5 +1,18 @@
 import requests
 
+
+def search_channel_id(query, api_key):
+    """Search for a YouTube channel ID by name."""
+    url = (
+        "https://www.googleapis.com/youtube/v3/search"
+        f"?key={api_key}&part=id&type=channel&q={query}&maxResults=1"
+    )
+    response = requests.get(url).json()
+    try:
+        return response["items"][0]["id"]["channelId"]
+    except (KeyError, IndexError):
+        return None
+
 def get_latest_video_id(channel_id, api_key):
     """
     Fetches the most recent uploaded video ID for a given channel.
