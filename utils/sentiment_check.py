@@ -22,9 +22,9 @@ def sentiment_summary(comments):
         }
 
     summary = {
-        "positive": round((count["positive"] / total) * 100, 1),
-        "neutral": round((count["neutral"] / total) * 100, 1),
-        "negative": round((count["negative"] / total) * 100, 1)
+        "positive": round((count.get("positive", 0) / total) * 100, 1),
+        "neutral": round((count.get("neutral", 0) / total) * 100, 1),
+        "negative": round((count.get("negative", 0) / total) * 100, 1)
     }
 
     explanations = {
