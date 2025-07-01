@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from utils.news_alerts import fetch_news_mentions
 from utils.sentiment_check import sentiment_summary
+from utils.youtube_api import get_latest_video_id, get_comments
 
 # Mock data for comments per creator
 mock_comments = {
