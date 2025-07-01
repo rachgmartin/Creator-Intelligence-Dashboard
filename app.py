@@ -110,10 +110,10 @@ try:
         if news_results:
             for article in news_results:
                 st.markdown(
-                    f"""**{article['title']}**
-*{article['source']} - {article['publishedAt']}*
-{article['description']}
-[Read more]({article['url']})"""
+                    f"**{article['title']}**\n"
+                    f"*{article['source']} - {article['publishedAt']}*\n"
+                    f"{article['description']}\n"
+                    f"[Read more]({article['url']})"
                 )
         else:
             st.write("No recent news mentions found.")
