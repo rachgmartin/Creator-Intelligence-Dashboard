@@ -54,7 +54,9 @@ try:
                     "Status": "",
                     "Last Updated": pd.Timestamp.today().date(),
                 }
-                df = df.append(new_row, ignore_index=True)
+                # Append the new row using pandas concat to avoid the deprecated
+                # DataFrame.append method
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
                 df.to_csv(csv_path, index=False)
                 st.session_state.creator_names.append(new_name)
                 st.experimental_rerun()
