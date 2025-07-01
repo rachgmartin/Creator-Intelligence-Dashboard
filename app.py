@@ -52,9 +52,16 @@ try:
     # --- Add New Creator ---
     with st.expander("Add a New Creator"):
         new_name = st.text_input("Creator Name", key="new_creator")
-        new_channel = st.text_input("Channel ID", key="new_channel_input", value=st.session_state.get("new_channel", ""))
+        new_channel = st.text_input(
+            "Channel ID",
+            key="new_channel_input",
+            value=st.session_state.get("new_channel", ""),
+        )
         if yt_api_key and st.button("Search Channel ID"):
-            found = search_channel_id(new_name, yt_api_key)
+            try:
+                found = search_channel_id(new_name, yt_api_key)
+            except Exception:
+                found = None
             if found:
                 st.session_state["new_channel"] = found
                 st.success(f"Found channel ID: {found}")
@@ -76,6 +83,22 @@ try:
                 st.session_state.creator_names.append(new_name)
                 st.session_state["new_channel"] = ""
                 st.experimental_rerun()
+
+    # --- Manage Roster ---
+    with st.expander("Manage Roster"):
+        search_term = st.text_input("Search Roster", key="roster_search")
+        if search_term:
+            roster_view = df[df["Creator Name"].str.contains(search_term, case=False, na=False)]
+        else:
+            roster_view = df
+        st.dataframe(roster_view)
+
+        remove_choice = st.selectbox("Remove Creator", st.session_state.creator_names, key="remove_creator")
+        if st.button("Delete Creator"):
+            df = df[df["Creator Name"] != remove_choice]
+            df.to_csv(csv_path, index=False)
+            st.session_state.creator_names.remove(remove_choice)
+            st.experimental_rerun()
 
     # GNews API Key input
     api_key = st.text_input("Enter your GNews API Key", type="password")
