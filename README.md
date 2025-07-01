@@ -2,6 +2,20 @@
 
 A Streamlit app for managing and monitoring a roster of YouTube creators. Tracks performance, requests, news mentions, and sentiment analysis.
 
+## Getting Started
+
+1. Install the required packages:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Launch the application using Streamlit:
+
+   ```bash
+   streamlit run app.py
+   ```
+
 ## Adding Real Creators
 
 1. Obtain a YouTube Data API key from the [Google Developer Console](https://console.cloud.google.com/).
