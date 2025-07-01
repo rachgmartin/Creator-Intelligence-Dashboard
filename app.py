@@ -1,6 +1,7 @@
 
 import streamlit as st
 import pandas as pd
+import os
 from utils.news_alerts import fetch_news_mentions
 from utils.sentiment_check import sentiment_summary
 from utils.youtube_api import get_latest_video_id, get_comments
@@ -28,8 +29,8 @@ mock_comments = {
 st.set_page_config(page_title="Creator Intelligence Dashboard", layout="wide")
 st.title("🎬 YouTube Creator Intelligence Dashboard")
 
-# Hardcoded absolute path
-csv_path = "/mnt/data/creator_dashboard/data/creator_roster.csv"
+# Path to roster CSV relative to this file
+csv_path = os.path.join(os.path.dirname(__file__), "data", "creator_roster.csv")
 
 try:
     df = pd.read_csv(csv_path)
@@ -45,10 +46,12 @@ try:
         news_results = fetch_news_mentions(selected_creator, api_key)
         if news_results:
             for article in news_results:
-                st.markdown(f"**{article['title']}**  
-*{article['source']} - {article['publishedAt']}*  
-{article['description']}  
-[Read more]({article['url']})")
+                st.markdown(
+                    f"""**{article['title']}**
+*{article['source']} - {article['publishedAt']}*
+{article['description']}
+[Read more]({article['url']})"""
+                )
         else:
             st.write("No recent news mentions found.")
     else:

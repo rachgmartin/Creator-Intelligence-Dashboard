@@ -16,7 +16,10 @@ def sentiment_summary(comments):
     total = len(results)
     count = Counter(results)
     if total == 0:
-        return {"positive": 0, "neutral": 0, "negative": 0}, []
+        return {"positive": 0, "neutral": 0, "negative": 0}, {
+            "positive": [],
+            "negative": []
+        }
 
     summary = {
         "positive": round((count["positive"] / total) * 100, 1),
