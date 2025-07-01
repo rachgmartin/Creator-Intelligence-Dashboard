@@ -122,7 +122,16 @@ try:
 
     # Sentiment summary
     st.header("🧠 Sentiment Analysis of Recent Comments")
-    comments = mock_comments.get(selected_creator, [])
+    comments = []
+    if yt_api_key:
+        channel_row = df[df["Creator Name"] == selected_creator]
+        if not channel_row.empty:
+            channel_id = channel_row.iloc[0]["Channel ID"]
+            video_id = get_latest_video_id(channel_id, yt_api_key)
+            if video_id:
+                comments = get_comments(video_id, yt_api_key)
+    if not comments:
+        comments = mock_comments.get(selected_creator, [])
     summary, explanations = sentiment_summary(comments)
 
     col1, col2, col3 = st.columns(3)
