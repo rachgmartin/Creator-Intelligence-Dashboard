@@ -39,7 +39,9 @@ csv_path = os.path.join(os.path.dirname(__file__), "data", "creator_roster.csv")
 try:
     df = pd.read_csv(csv_path)
     if "creator_names" not in st.session_state:
-        st.session_state.creator_names = df["Creator Name"].tolist()
+        st.session_state["creator_names"] = df["Creator Name"].tolist()
+    if "new_channel" not in st.session_state:
+        st.session_state["new_channel"] = ""
 
     # API keys
     yt_api_key = st.text_input("Enter your YouTube API Key", type="password")
@@ -50,11 +52,11 @@ try:
     # --- Add New Creator ---
     with st.expander("Add a New Creator"):
         new_name = st.text_input("Creator Name", key="new_creator")
-        new_channel = st.text_input("Channel ID", key="new_channel")
+        new_channel = st.text_input("Channel ID", key="new_channel_input", value=st.session_state.get("new_channel", ""))
         if yt_api_key and st.button("Search Channel ID"):
             found = search_channel_id(new_name, yt_api_key)
             if found:
-                st.session_state.new_channel = found
+                st.session_state["new_channel"] = found
                 st.success(f"Found channel ID: {found}")
             else:
                 st.warning("Channel not found.")
@@ -72,7 +74,7 @@ try:
                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
                 df.to_csv(csv_path, index=False)
                 st.session_state.creator_names.append(new_name)
-                st.session_state.new_channel = ""
+                st.session_state["new_channel"] = ""
                 st.experimental_rerun()
 
     # GNews API Key input
