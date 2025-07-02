@@ -12,7 +12,9 @@ def analyze_sentiment(text):
         return "neutral"
 
 def sentiment_summary(comments):
-    results = [analyze_sentiment(comment) for comment in comments]
+    """Return sentiment percentages and example comments."""
+    labeled = [(c, analyze_sentiment(c)) for c in comments]
+    results = [label for _, label in labeled]
     total = len(results)
     count = Counter(results)
     if total == 0:
@@ -24,12 +26,12 @@ def sentiment_summary(comments):
     summary = {
         "positive": round((count.get("positive", 0) / total) * 100, 1),
         "neutral": round((count.get("neutral", 0) / total) * 100, 1),
-        "negative": round((count.get("negative", 0) / total) * 100, 1)
+        "negative": round((count.get("negative", 0) / total) * 100, 1),
     }
 
     explanations = {
-        "positive": [c for c in comments if analyze_sentiment(c) == "positive"][:3],
-        "negative": [c for c in comments if analyze_sentiment(c) == "negative"][:3]
+        "positive": [c for c, label in labeled if label == "positive"][:3],
+        "negative": [c for c, label in labeled if label == "negative"][:3],
     }
 
     return summary, explanations

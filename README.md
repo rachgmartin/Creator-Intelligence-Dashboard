@@ -2,7 +2,7 @@
 
 A Streamlit app for managing and monitoring a roster of YouTube creators. Tracks performance, requests, news mentions, and sentiment analysis.
 
-Recent updates ensure that the latest video comments are properly retrieved for sentiment analysis and that news alerts search by both a creator's name and their channel title for more relevant results.
+Recent updates improve comment retrieval to capture more comments from a creator's newest video for sentiment analysis and ensure news alerts search by both a creator's name and their channel title for more relevant results.
 
 ## Getting Started
 
