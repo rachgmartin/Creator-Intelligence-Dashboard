@@ -4,7 +4,12 @@ import pandas as pd
 import os
 from utils.news_alerts import fetch_news_mentions
 from utils.sentiment_check import sentiment_summary
-from utils.youtube_api import get_latest_video_id, get_comments, get_channel_stats
+from utils.youtube_api import (
+    get_latest_video_id,
+    get_comments,
+    get_channel_stats,
+    get_channel_title,
+)
 
 st.set_page_config(page_title="Creator Intelligence Dashboard", layout="wide")
 st.title("🎬 YouTube Creator Intelligence Dashboard")
@@ -65,7 +70,8 @@ if not df.empty:
 
     # News Mentions
     st.subheader("📰 News Mentions")
-    news_results = fetch_news_mentions(selected_creator, api_key_news)
+    channel_name = get_channel_title(channel_id, api_key_yt) or selected_creator
+    news_results = fetch_news_mentions(selected_creator, channel_name, api_key_news)
     if news_results:
         for article in news_results:
             st.markdown(
