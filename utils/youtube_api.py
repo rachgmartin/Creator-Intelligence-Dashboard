@@ -19,7 +19,7 @@ def get_latest_video_id(channel_id, api_key):
     """
     url = (
         f"https://www.googleapis.com/youtube/v3/search"
-        f"?key={api_key}&channelId={channel_id}&part=snippet,id&order=date&maxResults=1"
+        f"?key={api_key}&channelId={channel_id}&part=snippet,id&order=date&type=video&maxResults=1"
     )
     response = requests.get(url).json()
     try:
@@ -34,7 +34,7 @@ def get_comments(video_id, api_key, max_results=100):
     comments = []
     url = (
         f"https://www.googleapis.com/youtube/v3/commentThreads"
-        f"?key={api_key}&textFormat=plainText&part=snippet&videoId={video_id}&maxResults={max_results}"
+        f"?key={api_key}&textFormat=plainText&part=snippet&videoId={video_id}&maxResults={max_results}&order=time"
     )
     response = requests.get(url).json()
     try:
@@ -44,3 +44,34 @@ def get_comments(video_id, api_key, max_results=100):
     except Exception:
         pass
     return comments
+
+
+def get_channel_stats(channel_id, api_key):
+    """Return subscriber, view, and video counts for a channel."""
+    url = (
+        "https://www.googleapis.com/youtube/v3/channels"
+        f"?key={api_key}&id={channel_id}&part=statistics"
+    )
+    data = requests.get(url).json()
+    try:
+        stats = data["items"][0]["statistics"]
+        return {
+            "subscribers": stats.get("subscriberCount"),
+            "views": stats.get("viewCount"),
+            "videos": stats.get("videoCount"),
+        }
+    except (KeyError, IndexError):
+        return None
+
+
+def get_channel_title(channel_id, api_key):
+    """Fetch the public title of a channel."""
+    url = (
+        "https://www.googleapis.com/youtube/v3/channels"
+        f"?key={api_key}&id={channel_id}&part=snippet"
+    )
+    data = requests.get(url).json()
+    try:
+        return data["items"][0]["snippet"]["title"]
+    except (KeyError, IndexError):
+        return None
