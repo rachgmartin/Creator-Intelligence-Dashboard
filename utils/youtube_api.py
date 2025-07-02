@@ -28,21 +28,24 @@ def get_latest_video_id(channel_id, api_key):
         return None
 
 def get_comments(video_id, api_key, max_results=100):
-    """
-    Retrieves top-level comments from a video.
-    """
+    """Retrieve up to ``max_results`` top-level comments from a video."""
     comments = []
-    url = (
+    base_url = (
         f"https://www.googleapis.com/youtube/v3/commentThreads"
-        f"?key={api_key}&textFormat=plainText&part=snippet&videoId={video_id}&maxResults={max_results}"
+        f"?key={api_key}&textFormat=plainText&part=snippet&videoId={video_id}&maxResults=100"
     )
-    response = requests.get(url).json()
-    try:
-        for item in response.get("items", []):
+    page_token = ""
+    while len(comments) < max_results:
+        url = base_url + (f"&pageToken={page_token}" if page_token else "")
+        data = requests.get(url).json()
+        for item in data.get("items", []):
             comment = item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
             comments.append(comment)
-    except Exception:
-        pass
+            if len(comments) >= max_results:
+                break
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            break
     return comments
 
 
