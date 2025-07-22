@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import re
 from utils.news_alerts import fetch_news_mentions
 from utils.sentiment_check import sentiment_summary
 from utils.youtube_api import (
@@ -18,7 +19,29 @@ api_key_news = st.secrets["GNEWS_API_KEY"]
 api_key_yt = st.secrets["YOUTUBE_API_KEY"]
 csv_path = "data/creator_roster.csv"
 
-# Load or create the CSV
+def validate_creator_name(name):
+    """Validate creator name input."""
+    if not name or not name.strip():
+        return False, "Creator name cannot be empty"
+    if len(name.strip()) > 100:
+        return False, "Creator name too long (max 100 characters)"
+    # Allow letters, numbers, spaces, and common punctuation
+    if not re.match(r'^[a-zA-Z0-9\s\-_.@#&]+$', name.strip()):
+        return False, "Creator name contains invalid characters"
+    return True, ""
+
+def validate_channel_id(channel_id):
+    """Validate YouTube channel ID format."""
+    if not channel_id or not channel_id.strip():
+        return False, "Channel ID cannot be empty"
+    # YouTube channel IDs are typically 24 characters starting with UC
+    cleaned_id = channel_id.strip()
+    if not re.match(r'^UC[a-zA-Z0-9_-]{22}$', cleaned_id):
+        return False, "Invalid YouTube channel ID format (should start with UC and be 24 characters)"
+    return True, ""
+
+# Ensure data directory exists and load or create the CSV
+os.makedirs(os.path.dirname(csv_path), exist_ok=True)
 if not os.path.exists(csv_path):
     df = pd.DataFrame(columns=["Creator Name", "Channel ID"])
     df.to_csv(csv_path, index=False)
