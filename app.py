@@ -15,8 +15,14 @@ from utils.youtube_api import (
 st.set_page_config(page_title="Creator Intelligence Dashboard", layout="wide")
 st.title("🎬 YouTube Creator Intelligence Dashboard")
 
-api_key_news = st.secrets["GNEWS_API_KEY"]
-api_key_yt = st.secrets["YOUTUBE_API_KEY"]
+# Check for required API keys
+try:
+    api_key_news = st.secrets["GNEWS_API_KEY"]
+    api_key_yt = st.secrets["YOUTUBE_API_KEY"]
+except KeyError as e:
+    st.error(f"Missing required API key: {e}. Please configure your secrets.")
+    st.stop()
+
 csv_path = "data/creator_roster.csv"
 
 def validate_creator_name(name):
@@ -54,12 +60,22 @@ with st.expander("➕ Add a New Creator"):
     new_name = st.text_input("Creator Name")
     new_channel_id = st.text_input("Channel ID")
     if st.button("Add Creator"):
-        if new_name and new_channel_id:
-            new_entry = pd.DataFrame([[new_name, new_channel_id]], columns=["Creator Name", "Channel ID"])
+        # Validate inputs
+        name_valid, name_error = validate_creator_name(new_name)
+        channel_valid, channel_error = validate_channel_id(new_channel_id)
+        
+        if not name_valid:
+            st.error(f"Invalid creator name: {name_error}")
+        elif not channel_valid:
+            st.error(f"Invalid channel ID: {channel_error}")
+        elif new_name.strip() in df["Creator Name"].values:
+            st.error("Creator already exists!")
+        else:
+            new_entry = pd.DataFrame([[new_name.strip(), new_channel_id.strip()]], columns=["Creator Name", "Channel ID"])
             df = pd.concat([df, new_entry], ignore_index=True)
             df.to_csv(csv_path, index=False)
-            st.success(f"{new_name} added successfully!")
-            st.experimental_rerun()
+            st.success(f"{new_name.strip()} added successfully!")
+            st.rerun()
 
 # 🗑️ Remove a creator
 with st.expander("🗑️ Remove a Creator"):
@@ -69,7 +85,7 @@ with st.expander("🗑️ Remove a Creator"):
             df = df[df["Creator Name"] != to_remove]
             df.to_csv(csv_path, index=False)
             st.success(f"{to_remove} removed.")
-            st.experimental_rerun()
+            st.rerun()
 
 # ---------------------------------
 # Main Dashboard
@@ -82,53 +98,62 @@ if not df.empty:
 
     # Channel Stats
     st.subheader("📈 Channel Stats")
-    stats = get_channel_stats(channel_id, api_key_yt)
-    if stats:
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Subscribers", stats["subscribers"])
-        col2.metric("Total Views", stats["views"])
-        col3.metric("Total Videos", stats["videos"])
-    else:
-        st.warning("Could not fetch channel statistics.")
+    with st.spinner("Fetching channel statistics..."):
+        stats = get_channel_stats(channel_id, api_key_yt)
+        if stats:
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Subscribers", stats["subscribers"])
+            col2.metric("Total Views", stats["views"])
+            col3.metric("Total Videos", stats["videos"])
+        else:
+            st.warning("Could not fetch channel statistics. Please check the channel ID.")
 
     # News Mentions
     st.subheader("📰 News Mentions")
-    channel_name = get_channel_title(channel_id, api_key_yt) or selected_creator
-    news_results = fetch_news_mentions(selected_creator, channel_name, api_key_news)
-    if news_results:
-        for article in news_results:
-            st.markdown(
-                f"**{article['title']}**  \n"
-                f"*{article['source']} - {article['publishedAt']}*  \n"
-                f"{article['description']}  \n"
-                f"[Read more]({article['url']})"
-            )
-    else:
-        st.write("No recent news mentions found.")
+    with st.spinner("Searching for news mentions..."):
+        channel_name = get_channel_title(channel_id, api_key_yt) or selected_creator
+        news_results = fetch_news_mentions(selected_creator, channel_name, api_key_news)
+        if news_results:
+            for article in news_results:
+                with st.container():
+                    st.markdown(
+                        f"**{article['title']}**  \n"
+                        f"*{article['source']} - {article['publishedAt']}*  \n"
+                        f"{article['description']}  \n"
+                        f"[Read more]({article['url']})"
+                    )
+                    st.divider()
+        else:
+            st.info("No recent news mentions found.")
 
     # Sentiment Summary
     st.subheader("🧠 Sentiment Analysis of Latest Video Comments")
-    video_id = get_latest_video_id(channel_id, api_key_yt)
-    if video_id:
-        comments = get_comments(video_id, api_key_yt)
-        if comments:
-            summary, explanations = sentiment_summary(comments)
+    with st.spinner("Analyzing sentiment of latest video comments..."):
+        video_id = get_latest_video_id(channel_id, api_key_yt)
+        if video_id:
+            comments = get_comments(video_id, api_key_yt)
+            if comments:
+                summary, explanations = sentiment_summary(comments)
 
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Positive", f"{summary['positive']}%")
-            col2.metric("Neutral", f"{summary['neutral']}%")
-            col3.metric("Negative", f"{summary['negative']}%")
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Positive", f"{summary['positive']}%", delta=None)
+                col2.metric("Neutral", f"{summary['neutral']}%", delta=None)
+                col3.metric("Negative", f"{summary['negative']}%", delta=None)
 
-            st.subheader("Example Positive Comments")
-            for c in explanations["positive"]:
-                st.markdown(f"✅ *{c}*")
+                if explanations["positive"]:
+                    st.subheader("Example Positive Comments")
+                    for c in explanations["positive"]:
+                        st.markdown(f"✅ *{c[:200]}{'...' if len(c) > 200 else ''}*")
 
-            st.subheader("Example Negative Comments")
-            for c in explanations["negative"]:
-                st.markdown(f"⚠️ *{c}*")
+                if explanations["negative"]:
+                    st.subheader("Example Negative Comments")
+                    for c in explanations["negative"]:
+                        st.markdown(f"⚠️ *{c[:200]}{'...' if len(c) > 200 else ''}*")
+                        
+                st.info(f"Analysis based on {len(comments)} comments from the latest video.")
+            else:
+                st.warning("No comments found on the latest video.")
         else:
-            st.warning("No comments found on the latest video.")
-    else:
-        st.warning("Could not find the latest video for this channel.")
+            st.warning("Could not find the latest video for this channel. Please verify the channel ID.")
 else:
     st.info("No creators added yet. Use the expander above to add one.")
