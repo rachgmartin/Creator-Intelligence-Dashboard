@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import os
 import re
-from utils.news_alerts import fetch_news_mentions
+
 from utils.sentiment_check import sentiment_summary
 from utils.youtube_api import (
     get_latest_video_id,
@@ -17,7 +17,6 @@ st.title("🎬 YouTube Creator Intelligence Dashboard")
 
 # Check for required API keys
 try:
-    api_key_news = st.secrets["GNEWS_API_KEY"]
     api_key_yt = st.secrets["YOUTUBE_API_KEY"]
 except KeyError as e:
     st.error(f"Missing required API key: {e}. Please configure your secrets.")
@@ -108,23 +107,7 @@ if not df.empty:
         else:
             st.warning("Could not fetch channel statistics. Please check the channel ID.")
 
-    # News Mentions
-    st.subheader("📰 News Mentions")
-    with st.spinner("Searching for news mentions..."):
-        channel_name = get_channel_title(channel_id, api_key_yt) or selected_creator
-        news_results = fetch_news_mentions(selected_creator, channel_name, api_key_news)
-        if news_results:
-            for article in news_results:
-                with st.container():
-                    st.markdown(
-                        f"**{article['title']}**  \n"
-                        f"*{article['source']} - {article['publishedAt']}*  \n"
-                        f"{article['description']}  \n"
-                        f"[Read more]({article['url']})"
-                    )
-                    st.divider()
-        else:
-            st.info("No recent news mentions found.")
+
 
     # Sentiment Summary
     st.subheader("🧠 Sentiment Analysis of Latest Video Comments")
